@@ -62,6 +62,16 @@ def normalize_frequency(freq):
         return str(freq).strip()
 
 
+# Calculate EIRP (radiated power) in dBW from a Service Fixe row.
+def calculate_eirp(service_row):
+    try:
+        tx_dbm = float(service_row["ETX_EQ_OUTPUT A"])
+        gain = float(service_row["EAN_GAIN_A"])
+        return round(gain + (tx_dbm - 30), 2)
+    except (TypeError, ValueError, KeyError):
+        return None
+
+
 # Build a unique lookup key for Service Fixe records.
 def build_lookup_key(city_a, city_b, frequency):
     return (

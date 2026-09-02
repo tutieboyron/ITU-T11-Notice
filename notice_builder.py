@@ -6,7 +6,7 @@ from config import (
     GAIN_TYPE, POWER_TYPE, POWER_AXIS, ANTENNA_DIRECTION, EMAIL,
     CHARSET, EMISSION_CLASS)
 from coordinate_utils import get_corrected_coordinates
-from utils import (safe_value, format_site_name,format_date,format_bandwidth,format_number,format_integer, format_double)
+from utils import (safe_value, format_site_name, format_date, format_bandwidth, format_number, format_integer, format_double, calculate_eirp)
 from service_lookup import normalize_polarization
 
 
@@ -73,9 +73,9 @@ def build_antenna(service_row, frequency):
 
     power_dbm = float(service_row["ETX_EQ_OUTPUT A"]) - 30   # Convert dBm → dBW
     gain = float(service_row["EAN_GAIN_A"])
-    eirp = round(gain + power_dbm, 2)
+    eirp = calculate_eirp(service_row)
 
-    if -60 <= eirp <= 70:
+    if eirp is not None and -60 <= eirp <= 70:
         radiated_power = format_number(eirp)
     else:
         radiated_power = ""

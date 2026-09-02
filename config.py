@@ -45,6 +45,13 @@ RED_FILL = PatternFill(
     fill_type="solid"
 )
 
+# Radiated power (EIRP) exceeds 70 dBW
+YELLOW_FILL = PatternFill(
+    start_color="FFFF00",
+    end_color="FFFF00",
+    fill_type="solid"
+)
+
 # ============================================================
 # NOTICE CONSTANTS
 # ============================================================

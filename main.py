@@ -1,11 +1,11 @@
 from dbm import error
 from coordinate_utils import get_corrected_coordinates
 from pathlib import Path
-from config import (INPUT_FILE, OUTPUT_FOLDER, GREEN_FILL, BLUE_FILL, RED_FILL)
+from config import (INPUT_FILE, OUTPUT_FOLDER, GREEN_FILL, BLUE_FILL, RED_FILL, YELLOW_FILL)
 from excel_loader import prepare_workbook
 from service_lookup import (build_service_lookup, get_service_row)
 from notice_builder import (build_head, build_notice, build_tail)
-from utils import normalize_band
+from utils import normalize_band, calculate_eirp
 
 # the main function that orchestrates the ITU Notice generation process
 def main():
@@ -33,6 +33,7 @@ def main():
     total_processed = 0
     total_missing = 0
     total_duplicates = 0
+    total_eirp_exceeded = 0
 
     # Get available EQ_BAND values
     itu_df["NORMALIZED_BAND"] = (
@@ -98,6 +99,22 @@ def main():
                     f"MTN_FX_{band_name}_"
                     f"{notice_counter:05d}"
                 )
+
+                # Skip rows where radiated power (EIRP) exceeds 70 dBW
+                eirp = calculate_eirp(service_row)
+                if eirp is not None and eirp > 70:
+                    print(
+                        f"\nSKIPPED\n"
+                        f"Band : {band}\n"
+                        f"Sites : "
+                        f"{itu_row['AD_CITY_A']} -> "
+                        f"{itu_row['AD_CITY_B']}\n"
+                        f"Reason : Radiated power exceeds 70 dBW ({eirp} dBW)"
+                    )
+
+                    ws[f"A{excel_row}"].fill = YELLOW_FILL
+                    total_eirp_exceeded += 1
+                    continue
 
                 # Validating the gain max
                 try:
@@ -215,6 +232,11 @@ def main():
 
     wb.save(output_excel)
     print("\nWorkbook saved.")
+    print(f"\nSummary:")
+    print(f"  Processed   : {total_processed:,}")
+    print(f"  Duplicates  : {total_duplicates:,}")
+    print(f"  EIRP > 70   : {total_eirp_exceeded:,}")
+    print(f"  Skipped/err : {total_missing:,}")
 
 
 # ============================================================
